@@ -1,0 +1,7 @@
+spring:
+  redis:
+    host: ${spring.redis.host}
+    port: ${spring.redis.port}
+logging:
+  level:
+    root: debug
