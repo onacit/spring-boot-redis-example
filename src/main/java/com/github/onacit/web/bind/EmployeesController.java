@@ -1,8 +1,8 @@
 package com.github.onacit.web.bind;
 
+import com.github.onacit.context.DataRedisConfiguration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -22,8 +22,6 @@ import javax.validation.constraints.NotBlank;
 import java.util.Objects;
 
 import static com.github.onacit.web.bind.Employee.key;
-import static com.github.onacit.web.bind.Employee.keySerializer;
-import static com.github.onacit.web.bind.Employee.valueSerializer;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
@@ -48,11 +46,11 @@ public class EmployeesController {
 
     @PostConstruct
     private void onPostConstruct() {
-        redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-        redisTemplate.setKeySerializer(keySerializer());
-        redisTemplate.setValueSerializer(valueSerializer());
-        redisTemplate.afterPropertiesSet();
+//        redisTemplate = new RedisTemplate<>();
+//        redisTemplate.setConnectionFactory(redisConnectionFactory);
+//        redisTemplate.setKeySerializer(keySerializer());
+//        redisTemplate.setValueSerializer(valueSerializer());
+//        redisTemplate.afterPropertiesSet();
     }
 
     //@PostMapping(consumes = APPLICATION_JSON_VALUE)
@@ -105,7 +103,8 @@ public class EmployeesController {
         final Boolean deleted = redisTemplate.delete(key(id));
     }
 
-    private final RedisConnectionFactory redisConnectionFactory;
+//    private final RedisConnectionFactory redisConnectionFactory;
 
-    private transient RedisTemplate<String, Employee> redisTemplate;
+    @DataRedisConfiguration.EmployeeRedisTemplate
+    private final RedisTemplate<String, Employee> redisTemplate;
 }
