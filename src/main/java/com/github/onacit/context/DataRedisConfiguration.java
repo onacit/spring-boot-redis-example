@@ -5,8 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import static com.github.onacit.web.bind.Employee.keySerializer;
@@ -14,12 +12,7 @@ import static com.github.onacit.web.bind.Employee.valueSerializer;
 
 @Configuration
 @Slf4j
-public class DataRedisConfiguration extends AbstractDataRedisConfiguration {
-
-    //@Bean
-    RedisConnectionFactory redisConnectionFactory(final RedisStandaloneConfiguration configuration) {
-        return new LettuceConnectionFactory(configuration);
-    }
+public class DataRedisConfiguration {
 
     @EmployeeRedisTemplate
     @Bean
