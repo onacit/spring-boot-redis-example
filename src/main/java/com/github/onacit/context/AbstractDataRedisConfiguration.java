@@ -19,15 +19,7 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Slf4j
-public abstract class AbstractDataRedisConfiguration {
-
-    @Qualifier
-    @Documented
-    @Target({FIELD, METHOD, TYPE, PARAMETER})
-    @Retention(RUNTIME)
-    public @interface EmployeeRedisTemplate {
-
-    }
+abstract class AbstractDataRedisConfiguration {
 
     @PostConstruct
     private void onPostConstruct() {

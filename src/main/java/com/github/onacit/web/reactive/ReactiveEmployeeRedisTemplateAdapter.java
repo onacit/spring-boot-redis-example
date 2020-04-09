@@ -1,10 +1,9 @@
 package com.github.onacit.web.reactive;
 
-import com.github.onacit.context.AbstractDataRedisConfiguration.EmployeeRedisTemplate;
+import com.github.onacit.context.EmployeeRedisTemplate;
 import com.github.onacit.web.bind.Employee;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
