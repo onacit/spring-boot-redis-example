@@ -17,6 +17,7 @@ public class DataRedisConfiguration {
     @EmployeeRedisTemplate
     @Bean
     public RedisTemplate<String, Employee> employeeRedisTemplate(final RedisConnectionFactory factory) {
+        log.debug("redis connection factory: {}", factory);
         final RedisTemplate<String, Employee> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
         template.setKeySerializer(keySerializer());
