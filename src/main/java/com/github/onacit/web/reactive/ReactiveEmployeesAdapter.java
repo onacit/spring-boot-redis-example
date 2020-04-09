@@ -2,13 +2,14 @@ package com.github.onacit.web.reactive;
 
 import com.github.onacit.web.bind.Employee;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializationContext.RedisSerializationContextBuilder;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
@@ -19,8 +20,10 @@ import static com.github.onacit.web.bind.Employee.valueSerializer;
 import static lombok.AccessLevel.PROTECTED;
 import static org.springframework.data.redis.serializer.RedisSerializationContext.newSerializationContext;
 
+@Component
+@RequiredArgsConstructor
 @Slf4j
-public abstract class AbstractReactiveEmployees {
+public class ReactiveEmployeesAdapter {
 
     @PostConstruct
     private void onPostConstruct() {
@@ -29,30 +32,29 @@ public abstract class AbstractReactiveEmployees {
         reactiveRedisTemplate = new ReactiveRedisTemplate<>(reactiveRedisConnectionFactory, context);
     }
 
-    protected Mono<Employee> get(final String id) {
+    public Mono<Employee> get(final String id) {
         return reactiveRedisTemplate
                 .opsForValue()
                 .get(key(id))
                 ;
     }
 
-    protected Mono<Boolean> set(final Employee entity) {
+    public Mono<Boolean> set(final Employee entity) {
         return reactiveRedisTemplate
                 .opsForValue()
                 .set(entity.key(), entity)
                 ;
     }
 
-    protected Mono<Long> del(final String id) {
+    public Mono<Long> del(final String id) {
         return reactiveRedisTemplate
                 .delete(key(id))
                 ;
     }
 
-    @Autowired
-    private ReactiveRedisConnectionFactory reactiveRedisConnectionFactory;
+    private final ReactiveRedisConnectionFactory reactiveRedisConnectionFactory;
 
     @Accessors(fluent = true)
     @Getter(PROTECTED)
-    private transient ReactiveRedisTemplate<String, Employee> reactiveRedisTemplate;
+    private ReactiveRedisTemplate<String, Employee> reactiveRedisTemplate;
 }

@@ -28,5 +28,5 @@ public class DataRedisReactiveConfiguration {
 
     private final RedisProperties redisProperties;
 
-    private transient RedisStandaloneConfiguration standaloneConfig;
+    private RedisStandaloneConfiguration standaloneConfig;
 }
