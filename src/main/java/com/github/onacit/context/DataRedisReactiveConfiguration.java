@@ -19,7 +19,8 @@ public class DataRedisReactiveConfiguration {
 
     @EmployeeRedisTemplate
     @Bean
-    public ReactiveRedisTemplate<String, Employee> employeeRedisTemplate(final ReactiveRedisConnectionFactory factory) {
+    public ReactiveRedisTemplate<String, Employee> reactiveEmployeeRedisTemplate(
+            final ReactiveRedisConnectionFactory factory) {
         log.debug("reactive redis connection factory: {}", factory);
         final RedisSerializationContextBuilder<String, Employee> builder = newSerializationContext(keySerializer());
         final RedisSerializationContext<String, Employee> context = builder.value(valueSerializer()).build();
