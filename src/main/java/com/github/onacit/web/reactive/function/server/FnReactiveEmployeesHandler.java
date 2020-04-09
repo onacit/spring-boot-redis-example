@@ -1,7 +1,7 @@
 package com.github.onacit.web.reactive.function.server;
 
 import com.github.onacit.web.bind.Employee;
-import com.github.onacit.web.reactive.ReactiveEmployeesAdapter;
+import com.github.onacit.web.reactive.ReactiveEmployeeRedisTemplateAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,12 @@ import static com.github.onacit.web.bind.EmployeesController.PATH_NAME_EMPLOYEE_
 import static com.github.onacit.web.bind.EmployeesController.PATH_TEMPLATE_EMPLOYEE_ID;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.web.reactive.function.BodyInserters.fromValue;
-import static org.springframework.web.reactive.function.server.ServerResponse.*;
+import static org.springframework.web.reactive.function.server.ServerResponse.badRequest;
+import static org.springframework.web.reactive.function.server.ServerResponse.created;
+import static org.springframework.web.reactive.function.server.ServerResponse.noContent;
+import static org.springframework.web.reactive.function.server.ServerResponse.notFound;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+import static org.springframework.web.reactive.function.server.ServerResponse.status;
 import static reactor.core.publisher.Mono.just;
 
 @Validated
@@ -30,7 +35,7 @@ public class FnReactiveEmployeesHandler {
     public Mono<ServerResponse> create(@NotNull final ServerRequest request) {
         return request
                 .bodyToMono(Employee.class)
-                .flatMap(v -> reactiveEmployeesAdapter.set(v)
+                .flatMap(v -> reactiveEmployeeRedisTemplateAdapter.set(v)
                         .filter(ok -> ok != null && ok)
                         .flatMap(ok -> {
                             final URI location = request
@@ -44,7 +49,7 @@ public class FnReactiveEmployeesHandler {
 
     public Mono<ServerResponse> read(@NotNull final ServerRequest request) {
         return just(request.pathVariable(PATH_NAME_EMPLOYEE_ID))
-                .flatMap(reactiveEmployeesAdapter::get)
+                .flatMap(reactiveEmployeeRedisTemplateAdapter::get)
                 .flatMap(v -> ok().body(fromValue(v)))
                 .switchIfEmpty(notFound().build());
     }
@@ -56,7 +61,7 @@ public class FnReactiveEmployeesHandler {
                     if (!Objects.equals(v.getId(), id)) {
                         return badRequest().bodyValue("$.id(" + v.getId() + ") != /{id}(" + id + ")");
                     }
-                    return reactiveEmployeesAdapter.set(v)
+                    return reactiveEmployeeRedisTemplateAdapter.set(v)
                             .filter(ok -> ok != null && ok)
                             .flatMap(ok -> noContent().build())
                             .switchIfEmpty(status(INTERNAL_SERVER_ERROR).build());
@@ -65,12 +70,12 @@ public class FnReactiveEmployeesHandler {
 
     public Mono<ServerResponse> delete(@NotNull final ServerRequest request) {
         return just(request.pathVariable(PATH_NAME_EMPLOYEE_ID))
-                .flatMap(reactiveEmployeesAdapter::del)
+                .flatMap(reactiveEmployeeRedisTemplateAdapter::del)
                 .filter(v -> v != null && v >= 0L)
                 .flatMap(v -> noContent().build())
                 .switchIfEmpty(status(INTERNAL_SERVER_ERROR).build())
                 ;
     }
 
-    private final ReactiveEmployeesAdapter reactiveEmployeesAdapter;
+    private final ReactiveEmployeeRedisTemplateAdapter reactiveEmployeeRedisTemplateAdapter;
 }

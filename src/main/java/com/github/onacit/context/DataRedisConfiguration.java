@@ -1,32 +1,34 @@
 package com.github.onacit.context;
 
-import lombok.RequiredArgsConstructor;
+import com.github.onacit.web.bind.Employee;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 
-import javax.annotation.PostConstruct;
+import static com.github.onacit.web.bind.Employee.keySerializer;
+import static com.github.onacit.web.bind.Employee.valueSerializer;
 
 @Configuration
-@RequiredArgsConstructor
 @Slf4j
-public class DataRedisConfiguration {
+public class DataRedisConfiguration extends AbstractDataRedisConfiguration {
 
-    @PostConstruct
-    private void onPostConstruct() {
-        standaloneConfig = new RedisStandaloneConfiguration(redisProperties.getHost(), redisProperties.getPort());
+    //@Bean
+    RedisConnectionFactory redisConnectionFactory(final RedisStandaloneConfiguration configuration) {
+        return new LettuceConnectionFactory(configuration);
     }
 
+    @EmployeeRedisTemplate
     @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory(standaloneConfig);
+    public RedisTemplate<String, Employee> employeeRedisTemplate(final RedisConnectionFactory factory) {
+        final RedisTemplate<String, Employee> template = new RedisTemplate<>();
+        template.setConnectionFactory(factory);
+        template.setKeySerializer(keySerializer());
+        template.setValueSerializer(valueSerializer());
+        template.afterPropertiesSet();
+        return template;
     }
-
-    private final RedisProperties redisProperties;
-
-    private transient RedisStandaloneConfiguration standaloneConfig;
 }

@@ -37,7 +37,7 @@ public class ReactiveEmployeesController {
     @PostMapping(consumes = APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<Object>> create(@NotNull final ServerHttpRequest request,
                                                @Valid @RequestBody final Employee entity) {
-        return reactiveEmployeesAdapter.set(entity)
+        return reactiveEmployeeRedisTemplateAdapter.set(entity)
                 .filter(ok -> ok != null && ok)
                 .map(v -> {
                     final URI location = fromUri(request.getURI())
@@ -52,7 +52,7 @@ public class ReactiveEmployeesController {
 
     @GetMapping(path = PATH_TEMPLATE_EMPLOYEE_ID, produces = APPLICATION_JSON_VALUE)
     public Mono<Employee> read(@NotBlank @PathVariable(name = PATH_NAME_EMPLOYEE_ID) final String id) {
-        return reactiveEmployeesAdapter.get(id)
+        return reactiveEmployeeRedisTemplateAdapter.get(id)
                 .switchIfEmpty(error(new ResponseStatusException(NOT_FOUND)));
     }
 
@@ -63,7 +63,7 @@ public class ReactiveEmployeesController {
         if (!Objects.equals(entity.getId(), id)) {
             throw new ResponseStatusException(BAD_REQUEST, "$.id(" + entity.getId() + ") != /{id}(" + id + ")");
         }
-        return reactiveEmployeesAdapter.set(entity)
+        return reactiveEmployeeRedisTemplateAdapter.set(entity)
                 .filter(ok -> ok != null && ok)
                 .switchIfEmpty(error(new ResponseStatusException(INTERNAL_SERVER_ERROR)));
     }
@@ -71,10 +71,10 @@ public class ReactiveEmployeesController {
     @ResponseStatus(NO_CONTENT)
     @DeleteMapping(path = PATH_TEMPLATE_EMPLOYEE_ID)
     public Mono<Long> delete(@PathVariable(name = PATH_NAME_EMPLOYEE_ID) final String id) {
-        return reactiveEmployeesAdapter.del(id)
+        return reactiveEmployeeRedisTemplateAdapter.del(id)
                 .filter(v -> v != null && v >= 0L)
                 .switchIfEmpty(error(new ResponseStatusException(INTERNAL_SERVER_ERROR)));
     }
 
-    private final ReactiveEmployeesAdapter reactiveEmployeesAdapter;
+    private final ReactiveEmployeeRedisTemplateAdapter reactiveEmployeeRedisTemplateAdapter;
 }
