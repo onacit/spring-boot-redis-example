@@ -101,7 +101,7 @@ public abstract class AbstractEmployeesControllerIT {
     @LocalServerPort
     private int localServerPort;
 
-    private transient URI baseUri;
+    private URI baseUri;
 
     @Autowired
     private TestRestTemplate restTemplate;
