@@ -2,28 +2,54 @@
 
 An example of using Redis with Spring Boot
 
-## Running Redis with Docker
+## Redis with Docker
 
 ### Run Redis
 
-You can run a Redis using `docker.redis.run.sh` script
+You can run a Redis instance using `docker.run.sh` script
 
 ```shell script
-$ sh ./docker.redis.run.sh
+$ sh ./docker.run.sh
 ```
 
-which just runs following command.
+which runs following command.
 
 ```shell script
-docker run --rm -p 36379:6379 --name some-redis -d redis
+docker run --rm -p 6379:6379 --name some-redis -d redis
 ```
 
 ### Connect to Redis
 
+You can connect to the Redis using `docker.cli.sh` script.
+
+```shell script
+$ sh ./docker.cli.sh
+```
+
+which runs following command.
+
+```shell script
+docker exec -it some-redis redis-cli
+```
+
 ### Stop Redis
 
-## springdoc-openapi
+You can stop the Redis using `docker.stop.sh` script.
 
-[springdoc-openapi](https://springdoc.org/) 가 준비되어 있습니다. 아래 주소를 통해 사용하실 수 있습니다.
+```shell script
+$ sh ./docker.stop.sh
+```
 
-http://localhost:8080/swagger-ui.html
+which runs following command.
+
+```shell script
+docker stop some-redis
+```
+
+## The Spring Boot Application
+
+Run the Application while your Redis is running.
+
+```shell script
+$ mvn spring-boot:run
+```
