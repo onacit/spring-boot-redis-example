@@ -1,6 +1,5 @@
 package com.github.onacit.web.bind;
 
-import com.github.onacit.context.EmployeeRedisTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -27,11 +25,13 @@ import java.util.Objects;
 
 import static com.github.onacit.web.bind.Employee.key;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.ResponseEntity.created;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
+import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 
 @Validated
 @RestController
@@ -49,11 +49,18 @@ public class EmployeesController {
     public static final String PATH_TEMPLATE_EMPLOYEE_ID
             = "{" + PATH_NAME_EMPLOYEE_ID + ":" + PATH_VALUE_EMPLOYEE_ID + "}";
 
+    /**
+     * Creates a new resource with specified entity.
+     *
+     * @param request a request.
+     * @param entity  the entity to create.
+     * @return a response entity.
+     */
     @PostMapping(consumes = APPLICATION_JSON_VALUE)
     public ResponseEntity<?> create(@NotNull final ServerHttpRequest request,
                                     @Valid @RequestBody final Employee entity) {
-        redisTemplate.opsForValue().set(entity.key(), entity);
-        final URI location = UriComponentsBuilder.fromUri(request.getURI())
+        redisTemplate.opsForValue().set(entity.key(), entity); // void
+        final URI location = fromUri(request.getURI())
                 .pathSegment(PATH_TEMPLATE_EMPLOYEE_ID)
                 .build()
                 .expand(entity.getId())
@@ -61,6 +68,12 @@ public class EmployeesController {
         return created(location).build();
     }
 
+    /**
+     * Reads the employee identified by specified value.
+     *
+     * @param id the value for identifying the employee.
+     * @return a response entity of the identified employee.
+     */
     @GetMapping(path = PATH_TEMPLATE_EMPLOYEE_ID, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Employee> read(@NotBlank @PathVariable(name = PATH_NAME_EMPLOYEE_ID) final String id) {
         final Employee entity = redisTemplate.opsForValue().get(key(id));
@@ -70,6 +83,12 @@ public class EmployeesController {
         return ok(entity);
     }
 
+    /**
+     * Updates the employee identified by specified value.
+     *
+     * @param id     the value for identifying the employee.
+     * @param entity new employee entity.
+     */
     @ResponseStatus(NO_CONTENT)
     @PutMapping(path = PATH_TEMPLATE_EMPLOYEE_ID, consumes = APPLICATION_JSON_VALUE)
     public void update(@PathVariable(name = PATH_NAME_EMPLOYEE_ID) final String id,
@@ -80,12 +99,20 @@ public class EmployeesController {
         redisTemplate.opsForValue().set(key(id), entity); // void
     }
 
+    /**
+     * Deletes the employee identified by specified value.
+     *
+     * @param id the value for identifying the employee.
+     */
     @ResponseStatus(NO_CONTENT)
     @DeleteMapping(path = PATH_TEMPLATE_EMPLOYEE_ID)
     public void delete(@PathVariable(name = PATH_NAME_EMPLOYEE_ID) final String id) {
         final Boolean deleted = redisTemplate.delete(key(id));
+        if (deleted == null) {
+            throw new ResponseStatusException(
+                    INTERNAL_SERVER_ERROR, "failed to delete the employee identified by /{id}(" + id + "}");
+        }
     }
 
-    @EmployeeRedisTemplate
     private final RedisTemplate<String, Employee> redisTemplate;
 }

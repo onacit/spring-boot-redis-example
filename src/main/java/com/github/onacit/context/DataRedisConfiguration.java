@@ -14,7 +14,6 @@ import static com.github.onacit.web.bind.Employee.valueSerializer;
 @Slf4j
 public class DataRedisConfiguration {
 
-    @EmployeeRedisTemplate
     @Bean
     public RedisTemplate<String, Employee> employeeRedisTemplate(final RedisConnectionFactory factory) {
         log.debug("redis connection factory: {}", factory);

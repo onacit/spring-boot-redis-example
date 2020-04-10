@@ -32,9 +32,14 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.ResponseEntity.created;
+import static org.springframework.http.ResponseEntity.status;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import static reactor.core.publisher.Mono.error;
+import static reactor.core.publisher.Mono.just;
+
+//import static org.springframework.web.reactive.function.server.ServerResponse.created;
+//import static org.springframework.web.reactive.function.server.ServerResponse.status;
 
 @Validated
 @RestController
@@ -50,7 +55,7 @@ public class ReactiveEmployeesController {
                                                @Valid @RequestBody final Employee entity) {
         return reactiveEmployeeRedisTemplateAdapter.set(entity)
                 .filter(ok -> ok != null && ok)
-                .map(v -> {
+                .map(ok -> {
                     final URI location = fromUri(request.getURI())
                             .pathSegment(PATH_TEMPLATE_EMPLOYEE_ID)
                             .build()
@@ -58,7 +63,7 @@ public class ReactiveEmployeesController {
                             .toUri();
                     return created(location).build();
                 })
-                .switchIfEmpty(error(new ResponseStatusException(INTERNAL_SERVER_ERROR)));
+                .switchIfEmpty(just(status(INTERNAL_SERVER_ERROR).build()));
     }
 
     @GetMapping(path = PATH_TEMPLATE_EMPLOYEE_ID, produces = APPLICATION_JSON_VALUE)
@@ -83,7 +88,7 @@ public class ReactiveEmployeesController {
     @DeleteMapping(path = PATH_TEMPLATE_EMPLOYEE_ID)
     public Mono<Long> delete(@PathVariable(name = PATH_NAME_EMPLOYEE_ID) final String id) {
         return reactiveEmployeeRedisTemplateAdapter.del(id)
-                .filter(v -> v != null && v >= 0L)
+                .filter(v -> v != null && (v == 0L || v == 1L))
                 .switchIfEmpty(error(new ResponseStatusException(INTERNAL_SERVER_ERROR)));
     }
 

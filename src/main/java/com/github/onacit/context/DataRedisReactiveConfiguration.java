@@ -17,7 +17,6 @@ import static org.springframework.data.redis.serializer.RedisSerializationContex
 @Slf4j
 public class DataRedisReactiveConfiguration {
 
-    @EmployeeRedisTemplate
     @Bean
     public ReactiveRedisTemplate<String, Employee> reactiveEmployeeRedisTemplate(
             final ReactiveRedisConnectionFactory factory) {
