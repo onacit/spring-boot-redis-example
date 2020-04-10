@@ -1,7 +1,7 @@
 package com.github.onacit.web.reactive.function.server;
 
 import com.github.onacit.web.bind.Employee;
-import com.github.onacit.web.reactive.AbstractReactiveEmployees;
+import com.github.onacit.web.reactive.ReactiveEmployeeRedisTemplateAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,12 +30,12 @@ import static reactor.core.publisher.Mono.just;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class FnReactiveEmployeesHandler extends AbstractReactiveEmployees {
+public class FnReactiveEmployeesHandler {
 
     public Mono<ServerResponse> create(@NotNull final ServerRequest request) {
         return request
                 .bodyToMono(Employee.class)
-                .flatMap(v -> set(v)
+                .flatMap(v -> reactiveEmployeeRedisTemplateAdapter.set(v)
                         .filter(ok -> ok != null && ok)
                         .flatMap(ok -> {
                             final URI location = request
@@ -49,7 +49,7 @@ public class FnReactiveEmployeesHandler extends AbstractReactiveEmployees {
 
     public Mono<ServerResponse> read(@NotNull final ServerRequest request) {
         return just(request.pathVariable(PATH_NAME_EMPLOYEE_ID))
-                .flatMap(this::get)
+                .flatMap(reactiveEmployeeRedisTemplateAdapter::get)
                 .flatMap(v -> ok().body(fromValue(v)))
                 .switchIfEmpty(notFound().build());
     }
@@ -61,7 +61,7 @@ public class FnReactiveEmployeesHandler extends AbstractReactiveEmployees {
                     if (!Objects.equals(v.getId(), id)) {
                         return badRequest().bodyValue("$.id(" + v.getId() + ") != /{id}(" + id + ")");
                     }
-                    return set(v)
+                    return reactiveEmployeeRedisTemplateAdapter.set(v)
                             .filter(ok -> ok != null && ok)
                             .flatMap(ok -> noContent().build())
                             .switchIfEmpty(status(INTERNAL_SERVER_ERROR).build());
@@ -70,10 +70,12 @@ public class FnReactiveEmployeesHandler extends AbstractReactiveEmployees {
 
     public Mono<ServerResponse> delete(@NotNull final ServerRequest request) {
         return just(request.pathVariable(PATH_NAME_EMPLOYEE_ID))
-                .flatMap(this::del)
+                .flatMap(reactiveEmployeeRedisTemplateAdapter::del)
                 .filter(v -> v != null && v >= 0L)
                 .flatMap(v -> noContent().build())
                 .switchIfEmpty(status(INTERNAL_SERVER_ERROR).build())
                 ;
     }
+
+    private final ReactiveEmployeeRedisTemplateAdapter reactiveEmployeeRedisTemplateAdapter;
 }

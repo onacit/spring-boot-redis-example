@@ -17,9 +17,12 @@ import java.net.URI;
 import static java.lang.System.nanoTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.PUT;
+import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -35,6 +38,25 @@ public abstract class AbstractEmployeesControllerIT {
     @PostConstruct
     private void onPostConstruct() {
         baseUri = fromHttpUrl("http://localhost:" + localServerPort).path(getRequestMappingPath()).build().toUri();
+    }
+
+    @Test
+    void testCreate() {
+        final Employee employee = new Employee();
+        employee.setId(Long.toString(nanoTime()));
+        employee.setName(Long.toString(nanoTime()));
+        final URI uri = fromUri(baseUri).build().toUri();
+        final MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.add(CONTENT_TYPE, APPLICATION_JSON_VALUE);
+        final HttpEntity<String> requestEntity = new HttpEntity<>(employee.toJsonString(), headers);
+        final ResponseEntity<Void> responseEntity = restTemplate.exchange(
+                uri,
+                POST,
+                requestEntity,
+                Void.class);
+        assertEquals(CREATED, responseEntity.getStatusCode());
+        final URI location = responseEntity.getHeaders().getLocation();
+        assertNotNull(location);
     }
 
     @Test
@@ -79,7 +101,7 @@ public abstract class AbstractEmployeesControllerIT {
     @LocalServerPort
     private int localServerPort;
 
-    private transient URI baseUri;
+    private URI baseUri;
 
     @Autowired
     private TestRestTemplate restTemplate;

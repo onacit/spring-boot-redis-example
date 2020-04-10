@@ -2,13 +2,14 @@ package com.github.onacit.web.bind;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,19 +17,21 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.annotation.PostConstruct;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import java.net.URI;
 import java.util.Objects;
 
 import static com.github.onacit.web.bind.Employee.key;
-import static com.github.onacit.web.bind.Employee.keySerializer;
-import static com.github.onacit.web.bind.Employee.valueSerializer;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.ResponseEntity.created;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
+import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 
 @Validated
 @RestController
@@ -46,40 +49,31 @@ public class EmployeesController {
     public static final String PATH_TEMPLATE_EMPLOYEE_ID
             = "{" + PATH_NAME_EMPLOYEE_ID + ":" + PATH_VALUE_EMPLOYEE_ID + "}";
 
-    @PostConstruct
-    private void onPostConstruct() {
-        redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-        redisTemplate.setKeySerializer(keySerializer());
-        redisTemplate.setValueSerializer(valueSerializer());
-        redisTemplate.afterPropertiesSet();
+    /**
+     * Creates a new resource with specified entity.
+     *
+     * @param request a request.
+     * @param entity  the entity to create.
+     * @return a response entity.
+     */
+    @PostMapping(consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> create(@NotNull final ServerHttpRequest request,
+                                    @Valid @RequestBody final Employee entity) {
+        redisTemplate.opsForValue().set(entity.key(), entity); // void
+        final URI location = fromUri(request.getURI())
+                .pathSegment(PATH_TEMPLATE_EMPLOYEE_ID)
+                .build()
+                .expand(entity.getId())
+                .toUri();
+        return created(location).build();
     }
 
-    //@PostMapping(consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> create(
-//            final HttpRequest request,
-//            final HttpServletRequest request,
-            @Valid @RequestBody final Employee entity) {
-        redisTemplate.opsForValue().set(entity.key(), entity);
-//        final URI location = fromCurrentRequestUri() // ServletUriComponentsBuilder
-//                .pathSegment(PATH_TEMPLATE_EMPLOYEE_ID)
-//                .build()
-//                .expand(entity.getId())
-//                .toUri();
-//        final URI location = fromHttpRequest(request) // UriComponentsBuilder
-//                .pathSegment(PATH_TEMPLATE_EMPLOYEE_ID)
-//                .build()
-//                .expand(entity.getId())
-//                .toUri();
-//        final URI location = fromHttpUrl(request.getRequestURI())
-//                .pathSegment(PATH_TEMPLATE_EMPLOYEE_ID)
-//                .build()
-//                .expand(entity.getId())
-//                .toUri();
-//        return ResponseEntity.created(location).build();
-        return null;
-    }
-
+    /**
+     * Reads the employee identified by specified value.
+     *
+     * @param id the value for identifying the employee.
+     * @return a response entity of the identified employee.
+     */
     @GetMapping(path = PATH_TEMPLATE_EMPLOYEE_ID, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Employee> read(@NotBlank @PathVariable(name = PATH_NAME_EMPLOYEE_ID) final String id) {
         final Employee entity = redisTemplate.opsForValue().get(key(id));
@@ -89,6 +83,12 @@ public class EmployeesController {
         return ok(entity);
     }
 
+    /**
+     * Updates the employee identified by specified value.
+     *
+     * @param id     the value for identifying the employee.
+     * @param entity new employee entity.
+     */
     @ResponseStatus(NO_CONTENT)
     @PutMapping(path = PATH_TEMPLATE_EMPLOYEE_ID, consumes = APPLICATION_JSON_VALUE)
     public void update(@PathVariable(name = PATH_NAME_EMPLOYEE_ID) final String id,
@@ -99,13 +99,20 @@ public class EmployeesController {
         redisTemplate.opsForValue().set(key(id), entity); // void
     }
 
+    /**
+     * Deletes the employee identified by specified value.
+     *
+     * @param id the value for identifying the employee.
+     */
     @ResponseStatus(NO_CONTENT)
     @DeleteMapping(path = PATH_TEMPLATE_EMPLOYEE_ID)
     public void delete(@PathVariable(name = PATH_NAME_EMPLOYEE_ID) final String id) {
         final Boolean deleted = redisTemplate.delete(key(id));
+        if (deleted == null) {
+            throw new ResponseStatusException(
+                    INTERNAL_SERVER_ERROR, "failed to delete the employee identified by /{id}(" + id + "}");
+        }
     }
 
-    private final RedisConnectionFactory redisConnectionFactory;
-
-    private transient RedisTemplate<String, Employee> redisTemplate;
+    private final RedisTemplate<String, Employee> redisTemplate;
 }

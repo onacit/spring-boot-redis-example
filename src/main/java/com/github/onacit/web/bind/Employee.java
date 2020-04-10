@@ -31,6 +31,11 @@ public class Employee implements Serializable {
         return requireNonNull(id, "id is null");
     }
 
+    /**
+     * Returns the spring representation of the object.
+     *
+     * @return the spring representation of the object.
+     */
     @Override
     public String toString() {
         return super.toString() + "{"
@@ -39,6 +44,11 @@ public class Employee implements Serializable {
                + "}";
     }
 
+    /**
+     * Returns the JSON representation of the object. This method is only for unit testing.
+     *
+     * @return the JSON representation of the object.
+     */
     public String toJsonString() {
         try {
             return new ObjectMapper().writer().writeValueAsString(this);

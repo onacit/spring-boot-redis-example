@@ -1,32 +1,28 @@
 package com.github.onacit.context;
 
-import lombok.RequiredArgsConstructor;
+import com.github.onacit.web.bind.Employee;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializationContext.RedisSerializationContextBuilder;
 
-import javax.annotation.PostConstruct;
+import static com.github.onacit.web.bind.Employee.keySerializer;
+import static com.github.onacit.web.bind.Employee.valueSerializer;
+import static org.springframework.data.redis.serializer.RedisSerializationContext.newSerializationContext;
 
 @Configuration
-@RequiredArgsConstructor
 @Slf4j
 public class DataRedisReactiveConfiguration {
 
-    @PostConstruct
-    private void onPostConstruct() {
-        standaloneConfig = new RedisStandaloneConfiguration(redisProperties.getHost(), redisProperties.getPort());
-    }
-
     @Bean
-    public ReactiveRedisConnectionFactory reactiveRedisConnectionFactory() {
-        return new LettuceConnectionFactory(standaloneConfig);
+    public ReactiveRedisTemplate<String, Employee> reactiveEmployeeRedisTemplate(
+            final ReactiveRedisConnectionFactory factory) {
+        log.debug("reactive redis connection factory: {}", factory);
+        final RedisSerializationContextBuilder<String, Employee> builder = newSerializationContext(keySerializer());
+        final RedisSerializationContext<String, Employee> context = builder.value(valueSerializer()).build();
+        return new ReactiveRedisTemplate<>(factory, context);
     }
-
-    private final RedisProperties redisProperties;
-
-    private transient RedisStandaloneConfiguration standaloneConfig;
 }
