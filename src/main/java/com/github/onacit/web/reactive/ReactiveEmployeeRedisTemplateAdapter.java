@@ -40,8 +40,5 @@ public class ReactiveEmployeeRedisTemplateAdapter {
                 ;
     }
 
-    //@EmployeeRedisTemplate
-    //@Accessors(fluent = true)
-    //@Getter(PROTECTED)
     private final ReactiveRedisTemplate<String, Employee> reactiveRedisTemplate;
 }
